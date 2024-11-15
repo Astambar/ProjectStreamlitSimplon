@@ -145,6 +145,7 @@ def search_quizz():
     return glob.glob("Quizz_*.json")
 def start_quizz():
     list_quizz = search_quizz()
+    
 def clean_name_quizz(name_file):
     mon_quizz = name_file
     mon_quizz = mon_quizz.replace('.json', '')
@@ -157,7 +158,7 @@ def transfom_name_quizz(new_name_quizz):
     #start_file_quizz = match(1)
     json_extension = match.group(3)
     st.write(f"{chiffre=}\n{json_extension=}")
+
 if '__main__' == __name__:
-    # create_quizz()
+    create_quizz()
     st.write(search_quizz())
-    transfom_name_quizz("Quizz_test1.json")
