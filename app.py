@@ -2,6 +2,7 @@ import streamlit as st
 import json
 import glob
 import re
+from typing import List
 class Question:
     def __init__(self, title_quizz, input_question, input_response_possible, input_correct_response):
         self.title_quizz = title_quizz
@@ -143,8 +144,63 @@ def create_quizz():
  
 def search_quizz():
     return glob.glob("Quizz_*.json")
+def load_quizz(list_quizz: List[str], index: int):
+    with open(list_quizz[index], "r") as file:
+        my_quizz = json.load(file)
+    return my_quizz
+
+
 def start_quizz():
+    # Chercher les fichiers de quiz
     list_quizz = search_quizz()
+    
+    if list_quizz:
+        # Extraire les noms des quiz et les nettoyer
+        quiz_names = [clean_name_quizz(quizz) for quizz in list_quizz]
+
+        if "selected_quizz" not in st.session_state:
+            st.session_state.selected_quizz = quiz_names[0]
+
+        # Afficher une sélection dans Streamlit
+        selected_quizz = st.selectbox("Sélectionnez un quiz à lancer :", quiz_names, key="selected_quizz")
+
+        # Récupérer l'index du fichier sélectionné
+        selected_index = quiz_names.index(selected_quizz)
+        
+        # Charger le quiz sélectionné
+        if st.button("Lancer le quiz"):
+            st.session_state.current_quizz = load_quizz(list_quizz, selected_index)
+            st.session_state.quiz_started = True
+
+    else:
+        st.write("Aucun quiz disponible.")
+    
+    # Affichage des questions si un quiz a été lancé
+    if st.session_state.get("quiz_started", False):
+        my_quizz = st.session_state.current_quizz
+        st.write(f"**Quiz: {my_quizz['Quizz'][1]['Title_Quizz']}**")  # Affiche le titre
+        
+        # Parcourir les questions du quiz
+        for idx, question_data in enumerate(my_quizz['Quizz'][0]['Questions_Quizz'], start=1):
+            question = question_data['Question'][0]['title_question']
+            responses = question_data['Question'][1]['response_possible']
+            correct_responses = question_data['Question'][2]['correct_responses']
+            
+            # Afficher la question
+            st.subheader(f"Question {idx}")
+            st.write(question)
+            
+            # Afficher les choix de réponses sous forme de boutons radio
+            user_response = st.radio("Choisissez une réponse :", responses, key=f"q_{idx}")
+
+            # Afficher si la réponse est correcte ou incorrecte
+            if st.button(f"Vérifier la réponse de la question {idx}", key=f"btn_{idx}"):
+                if responses.index(user_response) in correct_responses:
+                    st.success("Bonne réponse !")
+                else:
+                    st.error("Mauvaise réponse.")
+
+
     
 def clean_name_quizz(name_file):
     mon_quizz = name_file
@@ -160,5 +216,6 @@ def transfom_name_quizz(new_name_quizz):
     st.write(f"{chiffre=}\n{json_extension=}")
 
 if '__main__' == __name__:
-    create_quizz()
-    st.write(search_quizz())
+    # create_quizz()
+    start_quizz()
+    # st.write(search_quizz())
